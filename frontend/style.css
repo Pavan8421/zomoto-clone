@@ -1,0 +1,162 @@
+body {
+  margin : 0;
+  padding: 0;
+  text-decoration: none;
+  width:100%;
+}
+
+.header-image {
+  position : absolute;
+  top : -20vh;
+  z-index: -1;
+  width: 100%;
+  height: 90vh;
+}
+
+.header-image img {
+  width: 100%;
+  height : 100%;
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: 20vh;
+  align-items: center;
+  height: 50vh;
+}
+.logo {
+  width: 40vh;
+}
+.head h3 {
+  font-size: 2.1em;
+  color: whitesmoke;
+  font-weight: lighter;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+/* restaurant styles */
+
+/* Grid Layout for Restaurants */
+
+.restaurants-section h2 {
+  color: rgb(54, 54, 54);
+  font-weight: lighter;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  text-align: center;
+  font-size: 3vw;
+  font-weight: bold;
+}
+
+.restaurants-section .underline hr {
+  background-color: rgb(224, 53, 70);
+  border: none;
+  height : 3px;
+  width: 50px;
+}
+.restaurants-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.restaurant-card {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.restaurant-card img {
+  width: 100%;
+  border-radius: 8px;
+  height : 200px;
+  object-fit: cover;
+}
+
+.restaurant-card h4 {
+  margin-top: 10px;
+  font-size: 1.2em;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  color: rgb(54, 54, 54);
+}
+
+.restaurant-card .rating {
+  width: 30%;
+  height: auto;
+  text-align: right;
+  font-size: 1em;
+  color: #5BA829;
+}
+
+.restaurant-card .cuisines {
+  width: 70%;
+  height: auto;
+  font-size: 1em;
+  color: gray;
+  margin-top: 10px;
+}
+
+.rating-btn {
+  color: white;
+  height: 40px;
+  width: 80px;
+  border: none;
+  border-radius: 4px;
+  font-size: 1.5em;
+}
+.rating-green {
+  background-color: green;
+}
+
+.rating-yellow {
+  background-color: yellow;
+  color : black;
+}
+
+.rating-red {
+  background-color: red;
+}
+.cuisine-rating-container {
+  display: grid;
+  grid-template-columns: auto auto;
+}
+.cuisine-btn {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin: 5px 5px 0 0; /* Add spacing between buttons */
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.cuisine-btn:hover {
+  background-color: darkred; /* Darker shade on hover */
+}
+
+
+/* Pagination Buttons */
+.pagination {
+  text-align: center;
+  margin-top: 30px;
+}
+
+.pagination button {
+  background-color: red;
+  color : white;
+  border: none;
+  padding: 10px 20px;
+  margin: 0 10px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.pagination button:disabled {
+  background-color: lightgray;
+  cursor: not-allowed;
+}
