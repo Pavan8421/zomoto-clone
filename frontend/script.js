@@ -41,7 +41,7 @@ function renderRestaurants(restaurants) {
     const cuisinesArray = restaurant.cuisines;
     //console.log(restaurant.cuisines)
     const ratingClass =
-    restaurant.aggregate_rating > 4
+    restaurant.aggregate_rating >= 4
       ? 'rating-green'
       : restaurant.aggregate_rating > 3
       ? 'rating-yellow'
@@ -51,12 +51,14 @@ function renderRestaurants(restaurants) {
       : "./images/default_restaurant.png";
     const cuisinesHTML = cuisinesArray.map(cuisine => `<button class="cuisine-btn">${cuisine}</button>`).join('');
     restaurantCard.innerHTML = `
-      <img src="${imageUrl}" alt="${restaurant.name}" />
-      <h4>${restaurant.name}</h4>
-      <div class = "cuisine-rating-container">
-        <div class="cuisines">${cuisinesHTML}</div>
-        <button class="rating-btn ${ratingClass}">${restaurant.aggregate_rating} ★</button>
-      </div>
+      <a href = "restaurant_detail.html?id=${restaurant.restaurant_id}" class = "restaurant-link">
+        <img src="${imageUrl}" alt="${restaurant.name}" />
+        <h4>${restaurant.name}</h4>
+        <div class = "cuisine-rating-container">
+          <div class="cuisines">${cuisinesHTML}</div>
+          <button class="rating-btn ${ratingClass}">${restaurant.aggregate_rating} ★</button>
+        </div>
+      </a>
     `;
 
     restaurantsGrid.appendChild(restaurantCard);

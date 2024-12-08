@@ -31,8 +31,8 @@ def get_restaurant_by_id(request, id):
       "rating_text": restaurant.rating_text,
       "votes": restaurant.votes,
       "image_url": restaurant.image_url,
-      "cuisines": [cuisine.name for cuisine in restaurant.cuisines.all()]
-    }, status = 300)
+      "cuisines": [cuisine.name for cuisine in restaurant.cuisines.all()],
+    }, status = 200)
   except Restaurant.DoesNotExist:
     return JsonResponse({"status" : False, "error": "Restaurant not found"}, status=404)
   except Exception as e:
