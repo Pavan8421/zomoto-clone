@@ -8,6 +8,11 @@ const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
 
 
+const searchDropdown = document.getElementById('search-dropdown');
+const locationForm = document.getElementById('location-form');
+const imageForm = document.getElementById('image-form');
+const locationSearchBtn = document.getElementById('location-search-btn');
+
 function fetchRestaurants(url = null) {
   if(url === null) {
     url = "http://127.0.0.1:8000/api/restaurants/?page=1&page_size=12"
@@ -88,5 +93,36 @@ nextBtn.addEventListener('click', () => {
     fetchRestaurants(nextPageUrl); // Fetch data for the next page
   }
 });
+
+
+
+// Update form visibility based on dropdown selection
+searchDropdown.addEventListener('change', (event) => {
+  if (event.target.value === 'location') {
+    locationForm.style.display = 'flex';
+    imageForm.style.display = 'none';
+  } else if (event.target.value === 'image') {
+    locationForm.style.display = 'none';
+    imageForm.style.display = 'flex';
+  }
+});
+
+
+// Handle search by location
+locationSearchBtn.addEventListener('click', () => {
+  const latitude = document.getElementById('latitude').value;
+  const longitude = document.getElementById('longitude').value;
+
+  if (latitude && longitude) {
+    const url = `http://127.0.0.1:8000/api/search-restaurants/?latitude=${latitude}&longitude=${longitude}`;
+    console.log('Fetching restaurants by location:', url);
+
+    fetchRestaurants(url)
+  } else {
+    alert('Please enter valid latitude and longitude!');
+  }
+});
+
+
 
 fetchRestaurants();

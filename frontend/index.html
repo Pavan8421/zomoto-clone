@@ -13,6 +13,26 @@
     <div class = "head">
       <img class = "logo" src = "https://b.zmtcdn.com/web_assets/8313a97515fcb0447d2d77c276532a511583262271.png">
       <h3>Discover the best food & drinks</h3>
+      <!-- Dropdown for search options -->
+      <div class="search-options">
+        <select id="search-dropdown">
+          <option value="location">By Location</option>
+          <option value="image">By Image</option>
+        </select>
+
+        <!-- Form for By Location -->
+        <form id="location-form" class="search-form" style="display: block;">
+          <input type="text" id="latitude" placeholder="Enter Latitude">
+          <input type="text" id="longitude" placeholder="Enter Longitude">
+          <button type="button" id="location-search-btn">Search</button>
+        </form>
+
+        <!-- Form for By Image -->
+        <form id="image-form" class="search-form" style="display: none;">
+          <input type="file" id="image-upload">
+          <button type="button" id="image-search-btn">Upload</button>
+        </form>
+      </div>
     </div>
     <div class = "header-image">
       <img src = "https://b.zmtcdn.com/web_assets/81f3ff974d82520780078ba1cfbd453a1583259680.png">
