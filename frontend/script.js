@@ -112,13 +112,20 @@ searchDropdown.addEventListener('change', (event) => {
 locationSearchBtn.addEventListener('click', () => {
   const latitude = document.getElementById('latitude').value;
   const longitude = document.getElementById('longitude').value;
+  const radius = document.getElementById('radius').value;
+  //console.log(radius)
+  if (latitude && longitude && radius) {
+    const url = `http://127.0.0.1:8000/api/search-restaurants/?latitude=${latitude}&longitude=${longitude}&radius=${radius}`;
+    console.log('Fetching restaurants by location:', url);
 
-  if (latitude && longitude) {
+    fetchRestaurants(url)
+  } else if(latitude && longitude) {
     const url = `http://127.0.0.1:8000/api/search-restaurants/?latitude=${latitude}&longitude=${longitude}`;
     console.log('Fetching restaurants by location:', url);
 
     fetchRestaurants(url)
-  } else {
+  }
+  else {
     alert('Please enter valid latitude and longitude!');
   }
 });
