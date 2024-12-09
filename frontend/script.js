@@ -12,6 +12,7 @@ const searchDropdown = document.getElementById('search-dropdown');
 const locationForm = document.getElementById('location-form');
 const imageForm = document.getElementById('image-form');
 const locationSearchBtn = document.getElementById('location-search-btn');
+const imgSearchBtn = document.getElementById('image-search-btn');
 
 function fetchRestaurants(url = null) {
   if(url === null) {
@@ -130,6 +131,52 @@ locationSearchBtn.addEventListener('click', () => {
   }
 });
 
+imgSearchBtn.addEventListener('click', async() => {
 
+
+  const imageInput = document.getElementById("image-upload");
+  
+  // Check if a file is selected
+  if (imageInput.files.length === 0) {
+    alert("Please select an image to upload.");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('image', imageInput.files[0]);
+
+  try {
+    // Await the response from the fetch call
+    const response = await fetch("http://127.0.0.1:8000/api/search-restaurants-by-image/", {
+      method: "POST",
+      body: formData,
+    });
+    console.log(response)
+    // Handle response errors
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    // Parse the response JSON
+    try {
+      const data = await response.json();
+      console.log("Response Data:", data); // Log the parsed data
+    } catch (parseError) {
+      console.error("Error parsing response JSON:", parseError);
+    }
+
+    // Process the data
+    totalPages = data.total_pages;
+    currentPage = data.current_page;
+    nextPageUrl = data.next_page;
+    prevPageUrl = data.previous_page;
+    updatePaginationButtons();
+    renderRestaurants(data.restaurants);
+
+  } catch (error) {
+    // Handle any errors during the fetch call
+    console.error("Error fetching data:", error);
+  }
+});
 
 fetchRestaurants();
