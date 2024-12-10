@@ -8,11 +8,17 @@ const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
 
 
-const searchDropdown = document.getElementById('search-dropdown');
-const locationForm = document.getElementById('location-form');
-const imageForm = document.getElementById('image-form');
-const locationSearchBtn = document.getElementById('location-search-btn');
-const imgSearchBtn = document.getElementById('image-search-btn');
+//const searchDropdown = document.getElementById('search-dropdown');
+//const locationForm = document.getElementById('location-form');
+//const imageForm = document.getElementById('image-form');
+//const locationSearchBtn = document.getElementById('location-search-btn');
+//const imgSearchBtn = document.getElementById('image-search-btn');
+
+const searchBtn = document.getElementById('search-btn');
+
+let latitude = '';
+let longitude = '';
+let radius = '';
 
 function fetchRestaurants(url = null) {
   if(url === null) {
@@ -97,6 +103,51 @@ nextBtn.addEventListener('click', () => {
 
 
 
+// Event listener for submit button
+searchBtn.addEventListener('click', async () => {
+  latitude = document.getElementById('latitude').value;
+  longitude = document.getElementById('longitude').value;
+  radius = document.getElementById('radius').value;
+
+  const imageInput = document.getElementById("image-upload");
+
+  // If image is selected, send a POST request
+  if (imageInput.files.length > 0) {
+    const formData = new FormData();
+    formData.append('image', imageInput.files[0]);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/search-restaurants-by-image/", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      console.log("Response Data:", data);
+      totalPages = data.total_pages;
+      currentPage = data.current_page;
+      nextPageUrl = data.next_page;
+      prevPageUrl = data.previous_page;
+      updatePaginationButtons();
+      renderRestaurants(data.restaurants);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+
+  } else if (latitude || longitude || radius) {
+    // If no image is selected, send a GET request with the parameters
+    const query = new URLSearchParams();
+    if (latitude) query.append("latitude", latitude);
+    if (longitude) query.append("longitude", longitude);
+    if (radius) query.append("radius", radius);
+
+    const url = `http://127.0.0.1:8000/api/restaurants/?${query.toString()}`;
+    fetchRestaurants(url);
+  }
+});
+
+
+
+/*
 // Update form visibility based on dropdown selection
 searchDropdown.addEventListener('change', (event) => {
   if (event.target.value === 'location') {
@@ -158,12 +209,10 @@ imgSearchBtn.addEventListener('click', async() => {
     }
 
     // Parse the response JSON
-    try {
-      const data = await response.json();
-      console.log("Response Data:", data); // Log the parsed data
-    } catch (parseError) {
-      console.error("Error parsing response JSON:", parseError);
-    }
+    
+    const data = await response.json();
+    console.log("Response Data:", data); // Log the parsed data
+    
 
     // Process the data
     totalPages = data.total_pages;
@@ -177,6 +226,6 @@ imgSearchBtn.addEventListener('click', async() => {
     // Handle any errors during the fetch call
     console.error("Error fetching data:", error);
   }
-});
+}); */
 
 fetchRestaurants();

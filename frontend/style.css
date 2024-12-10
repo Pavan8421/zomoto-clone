@@ -228,7 +228,7 @@ body {
 
 
 /* Add styles for the dropdown and forms */
-.search-options {
+/*.search-options {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -242,10 +242,12 @@ body {
   border: 1px solid #ccc;
   border-radius: 5px;
 }
-
+*/
 .search-form {
   display: flex;
-  gap: 10px;
+  justify-content: space-between;
+  margin: 20px;
+  gap:10px;
   align-items: center;
 }
 

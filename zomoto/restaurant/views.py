@@ -5,9 +5,11 @@ from .models import *
 from django.http import JsonResponse,HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .clipmodel_predict import *
-
+from django.db.models import Q
 from django.core.paginator import Paginator,PageNotAnInteger,EmptyPage
+from django.test import RequestFactory
 from django.urls import reverse
+from django.urls import resolve
 from math import radians, cos, sin, sqrt, atan2
 # Create your views here.
 
@@ -44,15 +46,46 @@ def get_restaurant_by_id(request, id):
     return JsonResponse({"status" : False, "error": e}, status = 500)
 
 
-def build_page_url(request, page, page_size):
-      base_url = request.build_absolute_uri(reverse('get_restaurants_with_pagination'))
-      return f"{base_url}?page={page}&page_size={page_size}"
+def build_page_url(request, page, page_size, restaurant_id = -1, latitude = -1, longitude = -1,radius = -1, cuisine = None):
+    #base_url = request.build_absolute_uri(reverse('get_restaurants_with_pagination'))
+    base_url = "http://127.0.0.1:8000/api/restaurants/"
+    query_params = f"page={page}&page_size={page_size}"
+    
+    if restaurant_id != -1:
+        query_params += f"&restaurant_id={restaurant_id}"
+    
+    if latitude != -1 and longitude != -1:
+        query_params += f"&latitude={latitude}&longitude={longitude}&radius={radius}"
+
+    if cuisine:
+        query_params += f"&cuisine={cuisine}"
+
+    return f"{base_url}?{query_params}"
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+      """
+      Calculate the Haversine distance between two points.
+      """
+      R = 6371  # Earth radius in kilometers
+      lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+      dlat = lat2 - lat1
+      dlon = lon2 - lon1
+
+      a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+      c = 2 * atan2(sqrt(a), sqrt(1 - a))
+      distance = R * c
+      return distance
 
 def get_restaurants_with_pagination(request):
-
+  
   try:
-    page_number = request.GET.get('page', 1)
-    page_size = request.GET.get('page_size', 10)
+    page_number = int(request.GET.get('page', 1))
+    page_size = int(request.GET.get('page_size', 10))
+    restaurant_id = int(request.GET.get('restaurant_id', -1))
+    latitude = float(request.GET.get('latitude', -1))
+    longitude = float(request.GET.get('longitude', -1))
+    radius = float(request.GET.get('radius', -1)) 
+    cuisine = request.GET.get('cuisine', None)
   
   except ValueError:
     return JsonResponse({
@@ -60,7 +93,26 @@ def get_restaurants_with_pagination(request):
       'error' : 'Invalid page or page-size parameter. Must be integers.'
     }, status = 400)
 
-  restaurants = Restaurant.objects.prefetch_related('cuisines').all()
+  query = Q()
+  if restaurant_id != -1:
+    query &= Q(restaurant_id=restaurant_id)
+
+  if cuisine:
+        query &= Q(cuisines__name__iexact=cuisine)
+
+  restaurants = Restaurant.objects.prefetch_related('cuisines').filter(query)
+
+
+  if latitude != -1 and longitude != -1 and radius > 0.0:
+
+    nearby_restaurants = []
+    for restaurant in restaurants:
+      distance = calculate_distance(latitude, longitude, restaurant.latitude, restaurant.longitude)
+      #print(distance)
+      if distance <= radius:
+        nearby_restaurants.append(restaurant)
+    restaurants = nearby_restaurants
+    
 
   paginator = Paginator(restaurants, page_size)
   try:
@@ -77,6 +129,7 @@ def get_restaurants_with_pagination(request):
       'status': False,
       'error' : 'Page number is out of range'
     }, status = 404)
+  
   restaurant_list = []
   for restaurant in page_obj.object_list:
       restaurant_list.append({
@@ -110,14 +163,66 @@ def get_restaurants_with_pagination(request):
       'total_pages': paginator.num_pages,  # Total number of pages
       'current_page': page_obj.number,  # Current page number
       'page_size': page_size,  # Number of items per page
-      'previous_page': build_page_url(request, page_obj.previous_page_number(), page_size) if page_obj.has_previous() else None,
-      'next_page': build_page_url(request, page_obj.next_page_number(), page_size) if page_obj.has_next() else None,
+      'previous_page': build_page_url(request, page_obj.previous_page_number(), page_size, restaurant_id, latitude, longitude, radius, cuisine) if page_obj.has_previous() else None,
+      'next_page': build_page_url(request, page_obj.next_page_number(), page_size, restaurant_id, latitude, longitude, radius, cuisine) if page_obj.has_next() else None,
       'restaurants': restaurant_list,  # List of restaurants
   }
-
+  #print(response)
   return JsonResponse(response)
 
 
+
+
+@csrf_exempt
+def search_restaurants_by_image(request):
+  if request.method == "POST" and request.FILES.get('image'):
+    uploaded_image = request.FILES['image']
+    page_number = int(request.GET.get('page', 1))
+    page_size = int(request.GET.get('page_size', 10))
+    restaurant_id = int(request.GET.get('restaurant_id', -1))
+    latitude = float(request.GET.get('latitude', -1))
+    longitude = float(request.GET.get('longitude', -1))
+    radius = float(request.GET.get('radius', -1))
+
+    # Validate file extension
+    valid_extensions = ['jpg', 'png', 'jpeg']
+    file_extension = uploaded_image.name.split('.')[-1].lower()
+    if file_extension not in valid_extensions:
+        return JsonResponse({
+                              'status' : False,
+                              'error' : 'Wrong file format image uploaded.'
+                            }, status = 400)
+    
+    # Specify a custom directory for temporary files
+    custom_temp_dir = "./"
+    if not os.path.exists(custom_temp_dir):
+        os.makedirs(custom_temp_dir)
+
+    # Save the uploaded image as a temporary file in the custom directory
+    with tempfile.NamedTemporaryFile(delete=False, dir=custom_temp_dir, suffix=f".{file_extension}") as temp_file:
+        for chunk in uploaded_image.chunks():
+            temp_file.write(chunk)
+        temp_image_path = temp_file.name
+
+    try:
+      # Process the temporary image file
+      predicted_cuisine = classify_cuisine(temp_image_path)
+    finally:
+      # Clean up the temporary file
+      os.remove(temp_image_path)
+
+
+    query_params = request.GET.copy()
+    query_params['cuisine'] = predicted_cuisine
+
+
+    # Create a new request object with the modified parameters
+    factory = RequestFactory()
+    modified_request = factory.get(request.path, query_params)
+    return get_restaurants_with_pagination(modified_request)
+
+
+'''
 def search_restaurants_by_distance(request):
 
     def calculate_distance(lat1, lon1, lat2, lon2):
@@ -198,16 +303,16 @@ def search_restaurants_by_distance(request):
         'total_pages': paginator.num_pages,  # Total number of pages
         'current_page': page_obj.number,  # Current page number
         'page_size': page_size,  # Number of items per page
-        'previous_page': build_page_url(request, page_obj.previous_page_number(), page_size) if page_obj.has_previous() else None,
-        'next_page': build_page_url(request, page_obj.next_page_number(), page_size) if page_obj.has_next() else None,
+        'previous_page': build_page_url(request, page_obj.previous_page_number(), page_size, 'search_restaurants_by_distance') if page_obj.has_previous() else None,
+        'next_page': build_page_url(request, page_obj.next_page_number(), page_size, 'search_restaurants_by_distance') if page_obj.has_next() else None,
         'restaurants': restaurant_list,  # List of restaurants
     }
 
     return JsonResponse(response)
   
-
+'''
 @csrf_exempt
-def search_restaurants_by_image(request):
+def search_restaurants_by(request):
   if request.method == "POST" and request.FILES.get('image'):
     print("Request recieved and post method")
     print("Request.Files", request.FILES)
@@ -294,8 +399,8 @@ def search_restaurants_by_image(request):
         'total_pages': paginator.num_pages,  # Total number of pages
         'current_page': page_obj.number,  # Current page number
         'page_size': page_size,  # Number of items per page
-        'previous_page': build_page_url(request, page_obj.previous_page_number(), page_size) if page_obj.has_previous() else None,
-        'next_page': build_page_url(request, page_obj.next_page_number(), page_size) if page_obj.has_next() else None,
+        'previous_page': build_page_url(request, page_obj.previous_page_number(), page_size, 'search_restaurants_by_image') if page_obj.has_previous() else None,
+        'next_page': build_page_url(request, page_obj.next_page_number(), page_size, 'search_restaurants_by_image') if page_obj.has_next() else None,
         'restaurants': restaurant_list,  # List of restaurants
     }
     print("Returning Response")
