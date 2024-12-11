@@ -8,17 +8,12 @@ const prevBtn = document.getElementById('prev-btn');
 const nextBtn = document.getElementById('next-btn');
 
 
-//const searchDropdown = document.getElementById('search-dropdown');
-//const locationForm = document.getElementById('location-form');
-//const imageForm = document.getElementById('image-form');
-//const locationSearchBtn = document.getElementById('location-search-btn');
-//const imgSearchBtn = document.getElementById('image-search-btn');
-
 const searchBtn = document.getElementById('search-btn');
 
 let latitude = '';
 let longitude = '';
 let radius = '';
+let cuisine_name = '';
 
 function fetchRestaurants(url = null) {
   if(url === null) {
@@ -35,6 +30,16 @@ function fetchRestaurants(url = null) {
 
       updatePaginationButtons();
       renderRestaurants(data.restaurants);
+
+      // Update the URL using history.pushState to reflect the current state
+      const queryParams = new URLSearchParams();
+      if (latitude) queryParams.append('latitude', latitude);
+      if (longitude) queryParams.append('longitude', longitude);
+      if (radius) queryParams.append('radius', radius);
+      if(cuisine_name) queryParams.append('cuisine', cuisine_name);
+      queryParams.append('page', currentPage);
+      history.pushState(null, '', '?' + queryParams.toString());
+      console.log(history);
     })
     .catch(error => {
       console.error("Error fetching data:", error);
@@ -123,12 +128,32 @@ searchBtn.addEventListener('click', async () => {
       });
       const data = await response.json();
       console.log("Response Data:", data);
-      totalPages = data.total_pages;
-      currentPage = data.current_page;
-      nextPageUrl = data.next_page;
-      prevPageUrl = data.previous_page;
-      updatePaginationButtons();
-      renderRestaurants(data.restaurants);
+      // totalPages = data.total_pages;
+      // currentPage = data.current_page;
+      // nextPageUrl = data.next_page;
+      // prevPageUrl = data.previous_page;
+      // updatePaginationButtons();
+      // renderRestaurants(data.restaurants);
+
+      cuisine_name = data.cuisine
+
+      const query = new URLSearchParams();
+      if (latitude) query.append("latitude", latitude);
+      if (longitude) query.append("longitude", longitude);
+      if (radius) query.append("radius", radius);
+      if(cuisine_name) query.append("cuisine", cuisine_name);
+      const url = `http://127.0.0.1:8000/api/restaurants/?${query.toString()}`;
+      fetchRestaurants(url);
+
+      // // Update the URL using history.pushState to reflect the current state
+      // const queryParams = new URLSearchParams();
+      // if (latitude) queryParams.append('latitude', latitude);
+      // if (longitude) queryParams.append('longitude', longitude);
+      // if (radius) queryParams.append('radius', radius);
+      // queryParams.append('page', currentPage);
+      // console.log(queryParams.toString())
+      // history.pushState(null, '', '?' + queryParams.toString());
+
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -145,87 +170,34 @@ searchBtn.addEventListener('click', async () => {
   }
 });
 
+window.addEventListener('load', () => {
+  const queryParams = new URLSearchParams(window.location.search);
+  console.log(queryParams)
+  latitude = queryParams.get('latitude');
+  longitude = queryParams.get('longitude');
+  radius = queryParams.get('radius');
+  cuisine_name = queryParams.get('cuisine');
+  const page = queryParams.get('page') || 1;
 
+  let url = "http://127.0.0.1:8000/api/restaurants/?page=" + page;
 
-/*
-// Update form visibility based on dropdown selection
-searchDropdown.addEventListener('change', (event) => {
-  if (event.target.value === 'location') {
-    locationForm.style.display = 'flex';
-    imageForm.style.display = 'none';
-  } else if (event.target.value === 'image') {
-    locationForm.style.display = 'none';
-    imageForm.style.display = 'flex';
+  // If parameters are available, append them to the URL
+  if (latitude) {
+    url += `&latitude=${latitude}`;
   }
+
+  if (longitude) {
+    url += `&longitude=${longitude}`;
+  }
+
+  if (radius) {
+    url += `&radius=${radius}`;
+  }
+
+  if(cuisine_name) {
+    url += `&cuisine=${cuisine_name}`;
+  }
+  console.log(url)
+  // Fetch restaurants based on the constructed URL
+  fetchRestaurants(url);
 });
-
-
-// Handle search by location
-locationSearchBtn.addEventListener('click', () => {
-  const latitude = document.getElementById('latitude').value;
-  const longitude = document.getElementById('longitude').value;
-  const radius = document.getElementById('radius').value;
-  //console.log(radius)
-  if (latitude && longitude && radius) {
-    const url = `http://127.0.0.1:8000/api/search-restaurants/?latitude=${latitude}&longitude=${longitude}&radius=${radius}`;
-    console.log('Fetching restaurants by location:', url);
-
-    fetchRestaurants(url)
-  } else if(latitude && longitude) {
-    const url = `http://127.0.0.1:8000/api/search-restaurants/?latitude=${latitude}&longitude=${longitude}`;
-    console.log('Fetching restaurants by location:', url);
-
-    fetchRestaurants(url)
-  }
-  else {
-    alert('Please enter valid latitude and longitude!');
-  }
-});
-
-imgSearchBtn.addEventListener('click', async() => {
-
-
-  const imageInput = document.getElementById("image-upload");
-  
-  // Check if a file is selected
-  if (imageInput.files.length === 0) {
-    alert("Please select an image to upload.");
-    return;
-  }
-
-  const formData = new FormData();
-  formData.append('image', imageInput.files[0]);
-
-  try {
-    // Await the response from the fetch call
-    const response = await fetch("http://127.0.0.1:8000/api/search-restaurants-by-image/", {
-      method: "POST",
-      body: formData,
-    });
-    console.log(response)
-    // Handle response errors
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    // Parse the response JSON
-    
-    const data = await response.json();
-    console.log("Response Data:", data); // Log the parsed data
-    
-
-    // Process the data
-    totalPages = data.total_pages;
-    currentPage = data.current_page;
-    nextPageUrl = data.next_page;
-    prevPageUrl = data.previous_page;
-    updatePaginationButtons();
-    renderRestaurants(data.restaurants);
-
-  } catch (error) {
-    // Handle any errors during the fetch call
-    console.error("Error fetching data:", error);
-  }
-}); */
-
-fetchRestaurants();
